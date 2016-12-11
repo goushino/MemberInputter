@@ -139,45 +139,50 @@ function addMemberListFromMail() {
         var formItem = items[9].asCheckboxItem();
         var response = formItem.createResponse(sibus)
         formResponse.withItemResponse(response);
+        
+        // Prefill Group
+        var formItem = items[10].asCheckboxItem();
+        var response = formItem.createResponse(sibus);
+        formResponse.withItemResponse(response);
     
         // Prefill Career
         if (career != "") {
-          var formItem = items[10].asTextItem();
+          var formItem = items[11].asTextItem();
           var response = formItem.createResponse(career);
           formResponse.withItemResponse(response);
         }
     
         // Prefill Ins
         if (insurance != "") {
-          var formItem = items[11].asTextItem();
+          var formItem = items[12].asTextItem();
           var response = formItem.createResponse(insurance);
           formResponse.withItemResponse(response);
         }
         
         // Prefill Holiday
         if (holiday != "") {
-          var formItem = items[12].asTextItem();
+          var formItem = items[13].asTextItem();
           var response = formItem.createResponse(holiday);
           formResponse.withItemResponse(response);
         }
         
         // Prefill Kikkake
         if (kikkake != "") {
-          var formItem = items[13].asTextItem();
+          var formItem = items[14].asTextItem();
           var response = formItem.createResponse(kikkake);
           formResponse.withItemResponse(response);
         }
         
         // Prefill Mes
         if (msg != "") {
-          var formItem = items[14].asParagraphTextItem();
+          var formItem = items[15].asParagraphTextItem();
           var response = formItem.createResponse(msg);
           formResponse.withItemResponse(response);
         }
         
         // Prefill Activity
         if (now != "") {
-          var formItem = items[18].asParagraphTextItem();
+          var formItem = items[19].asParagraphTextItem();
           var response = formItem.createResponse("" + now + " ŽQ‰Á");
           formResponse.withItemResponse(response);
         }
