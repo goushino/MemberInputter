@@ -1,0 +1,196 @@
+function addMemberListFromMail() {
+  var label = GmailApp.getUserLabelByName("NOT_ADDED");
+  if(label == null){
+    GmailApp.createLabel("NOT_ADDED");
+  }
+  else{
+    var threads = label.getThreads();
+    for(var i in threads){
+      var messages = threads[i].getMessages();
+      for(var j in messages){
+        var message = messages[j];
+        //var from = message.getFrom();
+        //var subject = message.getSubject();
+        try{
+          var body = message.getPlainBody().replace(/\r/g, "").replace(/\n\n/g, "\n").replace(/\n\n/g, "\n");//改行とスペースを統一
+          body = body.replace(/>/g, "");//引用記号を削除
+        }catch(e){
+          var sendmsg = "差出人：" + message.getFrom() + ",件名：" + message.getSubject() + "のメールが名簿に追加できませんでした。";
+          MailApp.sendEmail({
+          to: "sc.cloud.drive@gmail.com",
+          subject: "名簿追加エラー通知",
+          htmlBody: sendmsg,
+          name:"名簿追加ERROR",
+        　});
+          Logger.log(e);
+          return;
+        };
+        
+        //メール本文から登録メンバーの情報を抽出
+        //キーワードの位置を取得
+        var indexName = body.indexOf("①");
+        var indexPhone = body.indexOf("②");
+        var indexLineID = body.indexOf("③");
+        var indexAddress = body.indexOf("④");
+        var indexKana = body.indexOf("①お名前");
+        var indexSex = body.indexOf("②性別");
+        var indexAge = body.indexOf("③年齢");
+        var indexArea = body.indexOf("④居住地:");
+        var indexCareer = body.indexOf("⑤登山歴");
+        var indexInsurance = body.indexOf("⑧特約付き傷害保険");
+        var indexHoliday = body.indexOf("⑨休日");
+        var indexKikkake = body.indexOf("⑩当サークルを知ったきっかけ");
+        var indexMail = body.indexOf("メールアドレス（入力");
+        var indexMsg = body.indexOf("メッセージ（複数名");
+        
+        //キーワードに続くメンバー情報を取得。キーワードが見つかっていなければ空白とする。
+        var name = (indexName<0) ? "" : body.slice(indexName+1).split("\n")[0];
+        var phone = (indexPhone<0) ? "" : body.slice(indexPhone+1).split("\n")[0];
+        var lineID = (indexLineID<0) ? "" : body.slice(indexLineID+1).split("\n")[0];
+        var address = (indexAddress<0) ? "" : body.slice(indexAddress+1).split("\n")[0];
+        var kana = (indexKana<0) ? "" : body.slice(indexKana+25).split("\n")[0];
+        var sex = (indexSex<0) ? "" : body.slice(indexSex+5).split("\n")[0];
+        var age = (indexAge<0) ? "" : body.slice(indexAge+5).split("\n")[0];
+        var area = (indexArea<0) ? "" : body.slice(indexArea+6).split("（")[0].split("(")[0];
+        var career = (indexCareer<0) ? "" : body.slice(indexCareer+10).split("\n")[0];
+        var insurance = (indexInsurance<0) ? "" : body.slice(indexInsurance+32).split("\n")[0];
+        var holiday = (indexHoliday<0) ? "" : body.slice(indexHoliday+26).split("\n")[0];
+        var kikkake = (indexKikkake<0) ? "" : body.slice(indexKikkake+25).split("\n")[0];
+        var mail = (indexMail<0) ? "" : body.slice(indexMail+29).split("\n")[0];
+        var msg = (indexMsg<0) ? "" : body.slice(indexMsg+34);
+        
+        //登録日を取得
+        var now = Utilities.formatDate(new Date(), 'Asia/Tokyo', "yyyy.M.d");
+        
+        //WEEKか土日かを判断する
+        var sibus = new Array();
+        if (area == "北陸" || area == "甲信越") {
+          sibus.push(area);
+        } else if (area == "関東WEEK") {
+          sibus.push("関東@WEEK");
+        } else if (area == "関西WEEK") {
+          sibus.push("関西@WEEK");
+        } else if (area == "中部WEEK") {
+          sibus.push("中部@WEEK");
+        } else {
+          if (holiday.search(/.*[土日].*/g) != -1) { sibus.push(area); }
+          if (holiday.search(/.*[月火水木金平].*/g) != -1) { sibus.push("" + area + "@WEEK"); }
+        }
+       
+        //Formを起動し,回答を作成
+        var form = FormApp.openById("フォームID");
+        var items = form.getItems()
+        
+        var formResponse = form.createResponse();
+  
+        // Prefill Name
+        var formItem = items[0].asTextItem();
+        var response = formItem.createResponse(name);
+        formResponse.withItemResponse(response);
+        
+        // Prefill Kana
+        var formItem = items[1].asTextItem();
+        var response = formItem.createResponse(kana);
+        formResponse.withItemResponse(response);
+        
+        // Prefill Sex
+        if (sex != "") {
+          var formItem = items[2].asMultipleChoiceItem();
+          var response = formItem.createResponse(sex);
+          formResponse.withItemResponse(response);
+        }
+    
+        // Prefill Tel
+        if (phone != "") {
+          var formItem = items[3].asTextItem();
+          var response = formItem.createResponse(phone);
+          formResponse.withItemResponse(response);
+        }
+    
+        // Prefill Mail
+        if (mail != "") {
+          var formItem = items[4].asTextItem();
+          var response = formItem.createResponse(mail);
+          formResponse.withItemResponse(response);
+        }
+    
+        // Prefill LINE_ID
+        if (lineID != "") {
+          var formItem = items[5].asTextItem();
+          var response = formItem.createResponse(lineID);
+          formResponse.withItemResponse(response);
+        }
+    
+        // Prefill Address
+        if (address != "") {
+          var formItem = items[7].asTextItem();
+          var response = formItem.createResponse(address);
+          formResponse.withItemResponse(response);
+        }
+        
+        // Prefill Age
+        if (age != "") {
+          var formItem = items[8].asTextItem();
+          var response = formItem.createResponse(age);
+          formResponse.withItemResponse(response);
+        }
+  
+        // Prefill Sibu
+        var formItem = items[9].asCheckboxItem();
+        var response = formItem.createResponse(sibus)
+        formResponse.withItemResponse(response);
+    
+        // Prefill Career
+        if (career != "") {
+          var formItem = items[10].asTextItem();
+          var response = formItem.createResponse(career);
+          formResponse.withItemResponse(response);
+        }
+    
+        // Prefill Ins
+        if (insurance != "") {
+          var formItem = items[11].asTextItem();
+          var response = formItem.createResponse(insurance);
+          formResponse.withItemResponse(response);
+        }
+        
+        // Prefill Holiday
+        if (holiday != "") {
+          var formItem = items[12].asTextItem();
+          var response = formItem.createResponse(holiday);
+          formResponse.withItemResponse(response);
+        }
+        
+        // Prefill Kikkake
+        if (kikkake != "") {
+          var formItem = items[13].asTextItem();
+          var response = formItem.createResponse(kikkake);
+          formResponse.withItemResponse(response);
+        }
+        
+        // Prefill Mes
+        if (msg != "") {
+          var formItem = items[14].asParagraphTextItem();
+          var response = formItem.createResponse(msg);
+          formResponse.withItemResponse(response);
+        }
+        
+        // Prefill Activity
+        if (now != "") {
+          var formItem = items[18].asParagraphTextItem();
+          var response = formItem.createResponse("" + now + " 参加");
+          formResponse.withItemResponse(response);
+        }
+        
+        formResponse.submit();
+      }
+      
+      threads[i].removeLabel(label);
+      var label_done = GmailApp.getUserLabelByName("ADDED");
+      if(label_done == null){
+        label_done = GmailApp.createLabel("ADDED");
+      }
+      threads[i].addLabel(label_done);
+    }
+  }
+}
